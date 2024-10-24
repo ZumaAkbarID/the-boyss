@@ -5,6 +5,7 @@ namespace App\Providers;
 use Carbon\Carbon;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\URL;
 use Inertia\Inertia;
 use App\Models\DefaultKas;
 use App\Models\Ledger;
@@ -25,6 +26,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }   
         $this->shareInertiaData();
     }
 
@@ -72,31 +76,28 @@ class AppServiceProvider extends ServiceProvider
 
     private function getCurrentSaldo()
     {
-        $currentMonthStart = Carbon::now()->startOfMonth();
-        $currentMonthEnd = Carbon::now()->endOfMonth();
-
-        // Hitung total IN dan OUT untuk bulan ini
-        $totalInThisMonth = Ledger::where('status', 'IN')
-            ->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])
-            ->sum('amount');
-
-        $totalOutThisMonth = Ledger::where('status', 'OUT')
-            ->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])
-            ->sum('amount');
-
-        // Hitung saldo sisa dari bulan sebelumnya
-        $totalInBeforeThisMonth = Ledger::where('status', 'IN')
-            ->where('created_at', '<', $currentMonthStart)
-            ->sum('amount');
-
-        $totalOutBeforeThisMonth = Ledger::where('status', 'OUT')
-            ->where('created_at', '<', $currentMonthStart)
-            ->sum('amount');
-
-        // Saldo bulan sebelumnya
-        $saldoBeforeThisMonth = $totalInBeforeThisMonth - $totalOutBeforeThisMonth;
-
-        // Saldo bulan ini dengan penambahan saldo dari bulan sebelumnya
-        return $saldoBeforeThisMonth + ($totalInThisMonth - $totalOutThisMonth);
+        $currentDate = Carbon::now();
+        $firstTransactionDate = Ledger::orderBy('created_at', 'asc')->first()->created_at;
+        $months = $firstTransactionDate->diffInMonths($currentDate) + 1;
+    
+        $accumulatedSaldo = 0;
+    
+        for ($i = 0; $i < $months; $i++) {
+            $startDate = $firstTransactionDate->copy()->addMonths($i)->startOfMonth();
+            $endDate = $startDate->copy()->endOfMonth();
+    
+            $totalInThisMonth = Ledger::where('status', 'IN')
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->sum('amount');
+    
+            $totalOutThisMonth = Ledger::where('status', 'OUT')
+                ->whereBetween('created_at', [$startDate, $endDate])
+                ->sum('amount');
+    
+            $monthlyBalance = $totalInThisMonth - $totalOutThisMonth;
+            $accumulatedSaldo += $monthlyBalance;
+        }
+    
+        return $accumulatedSaldo;
     }
 }

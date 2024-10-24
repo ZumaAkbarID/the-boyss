@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Ledger;
 use App\Models\Talangan;
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class HistoryController extends Controller

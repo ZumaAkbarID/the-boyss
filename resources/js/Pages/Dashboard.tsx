@@ -18,6 +18,8 @@ type DashboardProps = {
     users: any;
     galonDrivers: any;
     talangan: any;
+    saldoCounts: any;
+    talanganCounts: any;
 };
 
 type GalonDriver = {
@@ -36,6 +38,8 @@ export default function Dashboard({
     users,
     galonDrivers,
     talangan,
+    saldoCounts,
+    talanganCounts,
 }: PageProps<DashboardProps>) {
     const { ledgers, currentSaldo }: any = usePage().props;
 
@@ -72,6 +76,8 @@ export default function Dashboard({
                         peopleRemaining={peopleRemaining}
                         currentSaldo={currentSaldo}
                         talangan={talangan}
+                        saldoCounts={saldoCounts}
+                        talanganCounts={talanganCounts}
                     />
                 </div>
                 {/* END OVERVIEW */}

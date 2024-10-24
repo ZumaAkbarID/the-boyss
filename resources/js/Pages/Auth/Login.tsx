@@ -57,7 +57,7 @@ export default function Login({
                             onChange={(e) =>
                                 setData("username", e.target.value)
                             }
-                            placeholder="Masukan usernmae"
+                            placeholder="Masukan username"
                         />
                         <InputError
                             message={errors.username}
